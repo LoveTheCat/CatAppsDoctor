@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CatApps Doctor</title>
+<style>
+:root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#202124;background:#f6f8fa}body{margin:0}.wrap{max-width:760px;margin:0 auto;padding:24px}.card{background:#fff;border:1px solid #d0d7de;border-radius:14px;padding:20px;margin:14px 0;box-shadow:0 1px 2px #0000000a}h1{font-size:26px;margin:0 0 4px}h2{font-size:18px;margin:0 0 12px}.muted{color:#656d76;font-size:14px}.status{padding:12px;border-radius:10px;background:#f6f8fa;margin:10px 0}.ok{background:#dafbe1}.warn{background:#fff8c5}.bad{background:#ffebe9}button,a.btn{display:inline-block;border:1px solid #8c959f;border-radius:8px;background:#fff;color:#24292f;padding:9px 13px;margin:4px 4px 4px 0;text-decoration:none;cursor:pointer;font:inherit}.primary{background:#0969da!important;color:#fff!important;border-color:#0969da!important}code{word-break:break-all}details{margin-top:12px}pre{white-space:pre-wrap;word-break:break-word;font-size:12px;background:#f6f8fa;padding:10px;border-radius:8px}.small{font-size:13px}</style>
+</head>
+<body><main class="wrap">
+<h1>🐱 CatApps Doctor</h1>
+<div class="muted">CatApps が開かない・Googleアカウントが混在したときの独立復旧ページ</div>
+<section class="card">
+<h2>診断</h2>
+<div id="diag" class="status">ブラウザ環境を確認しています…</div>
+<div class="small">このページはGoogle Apps Script外で動作します。Googleのログインアカウント一覧やCookieの内容は、ブラウザのセキュリティ制約により取得しません。</div>
+</section>
+<section class="card">
+<h2>Apps Script account slot を試す</h2>
+<p class="small">Googleマルチログイン時の <code>authuser</code> は端末・ブラウザごとの番号です。固定値として保存しません。</p>
+<div id="slots"></div>
+<p class="small">まず通常URL、だめなら slot 0〜4 を順に新しいタブで試します。Google側でApps Script到達前に失敗する場合、Doctorから成功を自動判定できないため、開いた画面を目視確認します。</p>
+</section>
+<section class="card">
+<h2>復旧手順</h2>
+<ol class="small"><li>対象アプリの通常URLを試す。</li><li>開けなければ account slot 0〜4 を試す。</li><li>どれも開けない場合はGoogleログインを整理し、使用したいGoogleアカウントだけで再ログインする。</li></ol>
+<a class="btn" href="https://accounts.google.com/Logout" target="_blank" rel="noopener">Googleログインを整理</a>
+</section>
+<section class="card">
+<h2>PoCログ</h2>
+<button id="copy">全コピー</button><button id="clear">クリア</button>
+<details><summary>ログを表示</summary><pre id="log"></pre></details>
+</section>
+<footer class="muted">CatApps Doctor v0.1.0 / Build 20260917-01</footer>
+</main>
+<script>
+(()=>{'use strict';
+const VERSION='0.1.0',BUILD='20260917-01';
+const APPS={
+ CatMemos:'https://script.google.com/macros/s/AKfycbzY_edh4xkE6xr-9fUq8KqR0asB8PsDQ7EfFXJazNfPB2ufY7CESM-9iSY-cdEXVAk5GQ/exec',
+ CatAuth:'https://script.google.com/macros/s/AKfycbwc236UVTnyIky6FcNn6hrRtm5TU0ku3BnzC_CaR2aCU_5I95nu4U-Y5oepMSzL5Iof3g/exec?diagnose=1'
+};
+const logEl=document.getElementById('log');let logs=[];
+function log(level,msg){const s=`${new Date().toISOString()} ${level} ${msg}`;logs.push(s);logEl.textContent=logs.join('\n');}
+function withSlot(url,n){const u=new URL(url);u.searchParams.set('authuser',String(n));return u.href;}
+function btn(label,url,primary=false){const a=document.createElement('a');a.className='btn'+(primary?' primary':'');a.textContent=label;a.href=url;a.target='_blank';a.rel='noopener';a.onclick=()=>log('INFO','OPEN '+label);return a;}
+const diag=document.getElementById('diag');
+const facts=[`Doctor ${VERSION}/${BUILD}`,`origin=${location.origin}`,`online=${navigator.onLine}`,`cookies=${navigator.cookieEnabled}`,`browser=${navigator.userAgent}`];
+diag.className='status ok';diag.textContent='DoctorはGoogle Apps Scriptとは独立して正常に起動しています。';facts.forEach(x=>log('INFO',x));
+const slots=document.getElementById('slots');
+Object.entries(APPS).forEach(([name,url])=>{const d=document.createElement('div');d.style.marginBottom='14px';const title=document.createElement('strong');title.textContent=name;d.append(title,document.createElement('br'),btn('通常URL',url,true));for(let i=0;i<=4;i++)d.append(btn('slot '+i,withSlot(url,i)));slots.append(d);});
+document.getElementById('copy').onclick=async()=>{await navigator.clipboard.writeText(logs.join('\n'));log('INFO','COPY');};
+document.getElementById('clear').onclick=()=>{logs=[];logEl.textContent='';};
+})();
+</script></body></html>
